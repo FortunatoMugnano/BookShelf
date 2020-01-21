@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookShelf.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20200121194116_Chnged-Author-Name")]
-    partial class ChngedAuthorName
+    [Migration("20200121212711_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -124,10 +124,7 @@ namespace BookShelf.Migrations
                     b.Property<string>("ApplicationUserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("AuthorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AutorhId")
+                    b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Genre")
@@ -326,7 +323,9 @@ namespace BookShelf.Migrations
 
                     b.HasOne("BookShelf.Models.Author", "Author")
                         .WithMany("Books")
-                        .HasForeignKey("AuthorId");
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BookShelf.Models.Comment", b =>

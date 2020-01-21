@@ -12,7 +12,7 @@ namespace BookShelf.Models
         public string Title { get; set; }
 
         [Display (Name = "Author")]
-        public int AutorhId { get; set; }
+        public int AuthorId { get; set; }
         public Author Author { get; set; }
 
         [Display(Name = "Year Published")]

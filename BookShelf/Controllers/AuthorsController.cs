@@ -41,6 +41,7 @@ namespace BookShelf.Controllers
             }
 
             var author = await _context.Author
+                .Include(a => a.Books)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (author == null)
             {
