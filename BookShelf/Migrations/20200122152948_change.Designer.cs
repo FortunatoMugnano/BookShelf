@@ -4,14 +4,16 @@ using BookShelf.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BookShelf.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200122152948_change")]
+    partial class change
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,7 +98,7 @@ namespace BookShelf.Migrations
                         {
                             Id = "00000000-ffff-ffff-ffff-ffffffffffff",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "76f5e67e-74db-4907-b2f3-3e9b686e08b4",
+                            ConcurrencyStamp = "39093206-4065-4eb8-87aa-d89c34075e74",
                             Email = "admin@admin.com",
                             EmailConfirmed = true,
                             FirstName = "admin",
@@ -104,7 +106,7 @@ namespace BookShelf.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@ADMIN.COM",
                             NormalizedUserName = "ADMIN@ADMIN.COM",
-                            PasswordHash = "AQAAAAEAACcQAAAAELwOINKiPkeLG/EK9gSP/Y+06reZEEY2eQCIlJw9O1RUKE8yr60tpSAgSbgEJRQZ3g==",
+                            PasswordHash = "AQAAAAEAACcQAAAAECtGlyy1FHqWEdgBAap+NDryuc7fNnXrtNiKx1jqXI6Zk1p0yLp69ZpKPrOPKeJ/0Q==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "7f434309-a4d9-48e9-9ebb-8803db794577",
                             TwoFactorEnabled = false,
@@ -130,26 +132,6 @@ namespace BookShelf.Migrations
                     b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Author");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 7,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            Name = "Gianni Rodari"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            Name = "Jimmy John"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            Name = "Jersey Mike"
-                        });
                 });
 
             modelBuilder.Entity("BookShelf.Models.Book", b =>
@@ -184,38 +166,6 @@ namespace BookShelf.Migrations
                     b.HasIndex("AuthorId");
 
                     b.ToTable("Book");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 10,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            AuthorId = 7,
-                            Genre = "Kids Novel",
-                            Rating = 9,
-                            Title = "Favole a telefono",
-                            YearPublished = 1990
-                        },
-                        new
-                        {
-                            Id = 11,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            AuthorId = 8,
-                            Genre = "Sandwiches",
-                            Rating = 8,
-                            Title = "Free Smells",
-                            YearPublished = 1990
-                        },
-                        new
-                        {
-                            Id = 12,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            AuthorId = 9,
-                            Genre = "Sandwiches",
-                            Rating = 7,
-                            Title = "Jersey Subs",
-                            YearPublished = 1996
-                        });
                 });
 
             modelBuilder.Entity("BookShelf.Models.Comment", b =>
@@ -241,29 +191,6 @@ namespace BookShelf.Migrations
                     b.HasIndex("BookId");
 
                     b.ToTable("Comment");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            BookId = 12,
-                            Text = "It smells like jersey"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            BookId = 10,
-                            Text = "A beautiful book of fairy tales for kids"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ApplicationUserId = "00000000-ffff-ffff-ffff-ffffffffffff",
-                            BookId = 11,
-                            Text = "What is even jimmy john's"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
