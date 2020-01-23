@@ -9,6 +9,7 @@ using BookShelf.Data;
 using BookShelf.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using BookShelf.Models.ViewModels;
 
 namespace BookShelf.Controllers
 {
@@ -31,7 +32,9 @@ namespace BookShelf.Controllers
             var applicationDbContext = _context.Book
                 .Where(a => a.ApplicationUserId == user.Id)
                 .Include(b => b.ApplicationUser)
-                .Include(b => b.Author);
+                .Include(b => b.Author)
+                .Include(b => b.BookGenres)
+                    .ThenInclude(bg => bg.Genre);
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -45,6 +48,8 @@ namespace BookShelf.Controllers
 
             var book = await _context.Book
                 .Include(b => b.Author)
+                 .Include(b => b.BookGenres)
+                    .ThenInclude(g => g.Genre)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (book == null)
             {
@@ -60,6 +65,7 @@ namespace BookShelf.Controllers
             var user = await GetCurrentUserAsync();
             var authors = _context.Author.Where(a => a.ApplicationUserId == user.Id);
             ViewData["AuthorId"] = new SelectList(authors, "Id", "Name");
+            ViewData["Genres"] = new SelectList(_context.Genre, "Id", "Description");
             return View();
         }
 
@@ -68,19 +74,41 @@ namespace BookShelf.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,AuthorId,YearPublished,Rating,Genre")] Book book)
+        public async Task<IActionResult> Create([Bind("Title,AuthorId,YearPublished,Rating,GenreIds")] BookViewModel bookViewModel)
         {
-            var user = await GetCurrentUserAsync();
-            book.ApplicationUserId = user.Id;
+
             if (ModelState.IsValid)
             {
-                _context.Add(book);
+                var user = await GetCurrentUserAsync();
+
+                // Add the book to the database
+                var bookDataModel = new Book
+                {
+                    Title = bookViewModel.Title,
+                    AuthorId = bookViewModel.AuthorId,
+                    YearPublished = bookViewModel.YearPublished,
+                    Rating = bookViewModel.Rating,
+                    ApplicationUserId = user.Id
+                    
+                };
+                _context.Add(bookDataModel);
                 await _context.SaveChangesAsync();
+
+                // After saving, the Book data model now has an Id. Add genres now
+                bookDataModel.BookGenres = bookViewModel.GenreIds.Select(genreId => new BookGenre
+                {
+                    BookId = bookDataModel.Id,
+                    GenreId = genreId
+                }).ToList();
+
+                // Save again to database
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", book.AuthorId);
-           
-            return View(book);
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", bookViewModel.AuthorId);
+            ViewData["Genres"] = new SelectList(_context.Genre, "Id", "Description", bookViewModel.GenreIds);
+            return View(bookViewModel);
         }
 
         // GET: Books/Edit/5
@@ -91,15 +119,32 @@ namespace BookShelf.Controllers
                 return NotFound();
             }
 
-            var book = await _context.Book.FindAsync(id);
+            var user = await GetCurrentUserAsync();
+            var book = await _context.Book
+                .Include(b => b.BookGenres)
+                .Where(b => b.ApplicationUserId == user.Id)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
             if (book == null)
             {
                 return NotFound();
             }
-            var user = await GetCurrentUserAsync();
-            var authors = _context.Author.Where(a => a.ApplicationUserId == user.Id);
-            ViewData["AuthorId"] = new SelectList(authors, "Id", "Name", book.AuthorId);
-            return View(book);
+           
+            // convert data model to view model
+            var bookViewModel = new BookViewModel
+            {
+                Id = book.Id,
+                Title = book.Title,
+                AuthorId = book.AuthorId,
+                Rating = book.Rating,
+                YearPublished = book.YearPublished,
+                GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList(),
+                ApplicationUserId = user.Id
+            };
+
+            ViewData["Genres"] = new SelectList(_context.Genre, "Id", "Description", bookViewModel.GenreIds);
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", bookViewModel.AuthorId);
+            return View(bookViewModel);
         }
 
         // POST: Books/Edit/5
@@ -107,25 +152,43 @@ namespace BookShelf.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,YearPublished,Rating,Genre")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,YearPublished,Rating,ApplicationUserId,GenreIds")] BookViewModel bookViewModel)
         {
-            if (id != book.Id)
+            if (id != bookViewModel.Id)
             {
                 return NotFound();
             }
 
-            var user = await GetCurrentUserAsync();
-            book.ApplicationUserId = user.Id;
             if (ModelState.IsValid)
             {
+                var user = await GetCurrentUserAsync();
+                // Get existing data
+                var bookDataModel = await _context.Book
+                    .Include(b => b.BookGenres)
+                    .FirstOrDefaultAsync(b => b.Id == id);
+
+                // Update data
+                bookDataModel.Id = bookViewModel.Id;
+                bookDataModel.Title = bookViewModel.Title;
+                bookDataModel.Rating = bookViewModel.Rating;
+                bookDataModel.YearPublished = bookViewModel.YearPublished;
+                bookDataModel.AuthorId = bookViewModel.AuthorId;
+                bookDataModel.ApplicationUserId = user.Id;
+                bookDataModel.BookGenres = bookViewModel.GenreIds.Select(gid => new BookGenre
+                {
+                    BookId = bookViewModel.Id,
+                    GenreId = gid
+                }).ToList();
+
                 try
                 {
-                    _context.Update(book);
+                    // Save changes
+                    _context.Update(bookDataModel);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BookExists(book.Id))
+                    if (!BookExists(bookViewModel.Id))
                     {
                         return NotFound();
                     }
@@ -136,8 +199,10 @@ namespace BookShelf.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", book.AuthorId);
-            return View(book);
+
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", bookViewModel.AuthorId);
+            ViewData["Genres"] = new SelectList(_context.Genre, "Id", "Description", bookViewModel.GenreIds);
+            return View(bookViewModel);
         }
 
         // GET: Books/Delete/5
@@ -149,8 +214,9 @@ namespace BookShelf.Controllers
             }
 
             var book = await _context.Book
-                .Include(b => b.ApplicationUser)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                 .Include(b => b.ApplicationUser)
+                 .Include(b => b.Author)
+                 .FirstOrDefaultAsync(m => m.Id == id);
             if (book == null)
             {
                 return NotFound();

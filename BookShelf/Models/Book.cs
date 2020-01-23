@@ -23,5 +23,8 @@ namespace BookShelf.Models
         public ApplicationUser ApplicationUser { get; set; }
 
         public List<Comment> Comments { get; set; }
+
+        [Display(Name = "Genres")]
+        public List<BookGenre> BookGenres { get; set; }
     }
 }
