@@ -73,6 +73,7 @@ namespace BookShelf.Controllers
         {
             var user = await GetCurrentUserAsync();
             comment.ApplicationUserId = user.Id;
+            comment.Date = DateTime.Now;
             if (ModelState.IsValid)
             {
                 _context.Add(comment);
@@ -118,6 +119,7 @@ namespace BookShelf.Controllers
 
             var user = await GetCurrentUserAsync();
             comment.ApplicationUserId = user.Id;
+            comment.Date = DateTime.Now;
             if (ModelState.IsValid)
             {
                 try

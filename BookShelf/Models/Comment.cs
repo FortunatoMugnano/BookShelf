@@ -11,6 +11,7 @@ namespace BookShelf.Models
         public int Id { get; set; }
         public string Text { get; set; }
         public string ApplicationUserId { get; set; }
+        public DateTime Date { get; set; }
         public ApplicationUser ApplicationUser { get; set; }
 
         [Display (Name = "Book Title")]

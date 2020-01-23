@@ -26,16 +26,35 @@ namespace BookShelf.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index([FromQuery]string search)
         {
-            var user = await GetCurrentUserAsync();
-            var applicationDbContext = _context.Book
-                .Where(a => a.ApplicationUserId == user.Id)
-                .Include(b => b.ApplicationUser)
-                .Include(b => b.Author)
-                .Include(b => b.BookGenres)
-                    .ThenInclude(bg => bg.Genre);
-            return View(await applicationDbContext.ToListAsync());
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var user = await GetCurrentUserAsync();
+                var books = _context.Book
+                    .Where(a => a.ApplicationUserId == user.Id)
+                    .Where(a => a.Title.Contains(search) || a.Author.Name.Contains(search))
+                    .Include(b => b.ApplicationUser)
+                    .Include(b => b.Author)
+                    .Include(b => b.BookGenres)
+                        .ThenInclude(bg => bg.Genre);
+                return View(books);
+
+            }
+            else
+            {
+                var user = await GetCurrentUserAsync();
+                var books = _context.Book
+                    .Where(a => a.ApplicationUserId == user.Id)
+                    .Include(b => b.ApplicationUser)
+                    .Include(b => b.Author)
+                    .Include(b => b.BookGenres)
+                        .ThenInclude(bg => bg.Genre);
+
+
+                return View(books);
+            }
         }
 
         // GET: Books/Details/5
@@ -48,6 +67,7 @@ namespace BookShelf.Controllers
 
             var book = await _context.Book
                 .Include(b => b.Author)
+                 .Include(b => b.Comments)
                  .Include(b => b.BookGenres)
                     .ThenInclude(g => g.Genre)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -109,6 +129,33 @@ namespace BookShelf.Controllers
             ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", bookViewModel.AuthorId);
             ViewData["Genres"] = new SelectList(_context.Genre, "Id", "Description", bookViewModel.GenreIds);
             return View(bookViewModel);
+        }
+
+        // GET: Comments/Create
+        [HttpGet("books/CreateComment/{bookId}")]
+        public async Task<IActionResult> CreateComment()
+        {
+            return View();
+        }
+
+        // POST: Comments/Create
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost("books/CreateComment/{bookId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateComment([FromRoute]int bookId, [Bind("Id,Text,ApplicationUserId,BookId,Date")] Comment comment)
+        {
+            var user = await GetCurrentUserAsync();
+            comment.ApplicationUserId = user.Id;
+            comment.BookId = bookId;
+            comment.Date = DateTime.Now;
+            if (ModelState.IsValid)
+            {
+                _context.Add(comment);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Details", "Books", new { id = bookId });
+            }
+            return View(comment);
         }
 
         // GET: Books/Edit/5

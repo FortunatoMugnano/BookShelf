@@ -4,7 +4,13 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<h1>Books</h1>
+
+<div class="searchWrapper">
+    <form class="searchBox">
+        <input class="form-control mr-sm-2" type="text" name="search" placeholder="Search Books or Authors" aria-label="Search">
+    </form>
+</div>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -46,7 +52,7 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.Rating)
                 </td>
-                <td>
+               <td>
                     @foreach (var bookGenre in item.BookGenres)
                     {
                         <div>
